@@ -1,0 +1,5 @@
+# If you don't have requirements.txt yet, create it
+pip freeze > requirements.txt
+
+# Or manually add Pillow to requirements.txt
+echo "Pillow>=10.0.0" >> requirements.txt
