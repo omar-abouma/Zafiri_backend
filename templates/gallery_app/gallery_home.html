@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Gallery Home</h1>
+
+{% if user.is_authenticated %}
+  <p>Welcome, {{ user.username }} | <a href="{% url 'edit_profile' %}">Edit Profile</a> | <a href="{% url 'upload_image' %}">Upload Image</a> | <a href="{% url 'logout' %}">Logout</a></p>
+{% else %}
+  <p><a href="{% url 'login' %}">Login</a></p>
+{% endif %}
+
+<h2>Categories</h2>
+<ul>
+  {% for category in categories %}
+    <li><a href="{% url 'category_detail' category.id %}">{{ category.name }}</a></li>
+  {% empty %}
+    <li>No categories found.</li>
+  {% endfor %}
+</ul>
+
+<h2>Images</h2>
+<ul>
+  {% for image in images %}
+    <li>
+      <strong>{{ image.title }}</strong> - {{ image.category.name if image.category else 'No category' }}<br>
+      <img src="{{ image.image.url }}" alt="{{ image.title }}" style="max-width: 200px;">
+      <p>{{ image.description }}</p>
+    </li>
+  {% empty %}
+    <li>No images to display.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

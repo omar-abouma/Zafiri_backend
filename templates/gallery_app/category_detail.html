@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Category: {{ category.name }}</h2>
+<p>{{ category.description }}</p>
+
+<ul>
+  {% for image in images %}
+    <li>
+      <strong>{{ image.title }}</strong><br>
+      <img src="{{ image.image.url }}" alt="{{ image.title }}" style="max-width: 200px;">
+      <p>{{ image.description }}</p>
+    </li>
+  {% empty %}
+    <li>No images in this category.</li>
+  {% endfor %}
+</ul>
+<a href="{% url 'gallery_home' %}">Back to Gallery</a>
+{% endblock %}
