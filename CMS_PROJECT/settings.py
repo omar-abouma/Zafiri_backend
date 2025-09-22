@@ -16,13 +16,13 @@ DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 # -------------------------
 # Security Settings
 # -------------------------
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "your-secret-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "your-secret-key-change-in-production")
 
 DEBUG = DJANGO_ENV == "development"
 
 # Allowed hosts
 if DEBUG:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 else:
     allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "")
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
+    'django_filters',
 
     # Your app
     "CMS_SYSTEM",
@@ -63,7 +64,15 @@ MIDDLEWARE = [
 # -------------------------
 # CORS (Cross-Origin)
 # -------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+CORS_ALLOW_CREDENTIALS = True
+
 # -------------------------
 # URL Config
 # -------------------------
@@ -75,14 +84,15 @@ ROOT_URLCONF = "CMS_PROJECT.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # Make sure templates are here
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",  # Needed for auth in templates
+                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.media",
             ],
         },
     },
@@ -98,17 +108,22 @@ WSGI_APPLICATION = "CMS_PROJECT.wsgi.application"
 # -------------------------
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "cms_db"),
-        "USER": os.getenv("POSTGRES_USER", "cms_user"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+# For PostgreSQL (uncomment and configure if needed)
+DATABASES = {
+    "default": {
+         "ENGINE": "django.db.backends.postgresql",
+         "NAME": os.getenv("POSTGRES_DB", "cms_db"),
+         "USER": os.getenv("POSTGRES_USER", "cms_user"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "admin@2025"),
         "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5433"),
-        "OPTIONS": {
-            "options": "-c search_path=public",
-        },
     }
-}
+ }
 
 # -------------------------
 # Password Validation
@@ -126,15 +141,15 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Africa/Dar_es_Salaam"
 USE_I18N = True
-USE_L10N = True  # You were missing this; usually recommended for localization
+USE_L10N = True
 USE_TZ = True
 
 # -------------------------
 # Static and Media Files
 # -------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]  # For development
-STATIC_ROOT = BASE_DIR / "staticfiles"    # For collectstatic in production
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -145,9 +160,17 @@ MEDIA_ROOT = BASE_DIR / "media"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
     ],
 }
 
@@ -155,11 +178,12 @@ REST_FRAMEWORK = {
 # JWT Settings
 # -------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
 # -------------------------
@@ -181,3 +205,13 @@ LOGGING = {
 # Default Primary Key Field
 # -------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -------------------------
+# CSRF Trusted Origins
+# -------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

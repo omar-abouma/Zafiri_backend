@@ -13,18 +13,15 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
-
+# Auto-create and save profile
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def manage_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'profile'):
+    else:
         instance.profile.save()
 
 
@@ -46,9 +43,27 @@ class GalleryImage(models.Model):
     image = models.ImageField(upload_to='gallery/')
     category = models.ForeignKey(GalleryCategory, on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    published = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+
+class News(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    ]
+
+    title = models.CharField(max_length=200)
+    short_text = models.TextField()
+    full_text = models.TextField()
+    image = models.ImageField(upload_to='news_images/', null=True, blank=True)
+    date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title

@@ -1,20 +1,26 @@
-from django.urls import path
-from django.contrib.auth import views as auth_views
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.urls import path, include
 from . import views
+from rest_framework.routers import DefaultRouter
+from .views import NewsViewSet, GalleryCategoryViewSet, GalleryImageViewSet, user_profile, get_user_profile
+from .views import PublicNewsViewSet
+router = DefaultRouter()
+router.register(r'news', NewsViewSet, basename='news')
+router.register(r'public-news', PublicNewsViewSet, basename='public-news')
+router.register(r'gallery-categories', GalleryCategoryViewSet, basename='gallery-categories')
+router.register(r'gallery-images', GalleryImageViewSet, basename='gallery-images')
 
 urlpatterns = [
-    # Regular website views
+    # API endpoints
+    path('api/', include(router.urls)),
+    path('api/profile/', get_user_profile, name='get_user_profile'),  # New endpoint
+    path('api/user-profile/', user_profile, name='user_profile'),     # Existing endpoint
+
+    path('api/profile-picture/', views.update_profile_picture, name='update_profile_picture'),
+    path('api/login/', views.CsrfExemptTokenObtainPairView.as_view(), name='token_obtain_pair'),
+
+    # Template views
     path('', views.gallery_home, name='gallery_home'),
     path('upload/', views.upload_image, name='upload_image'),
-    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('edit-profile/', views.edit_profile, name='edit_profile'),
     path('category/<int:category_id>/', views.category_detail, name='category_detail'),
-
-    # HTML login/logout pages (Django built-in auth views)
-    path('login/', auth_views.LoginView.as_view(template_name='gallery_app/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='gallery_home'), name='logout'),
-
-    # API login/logout using JWT tokens (for REST clients)
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
