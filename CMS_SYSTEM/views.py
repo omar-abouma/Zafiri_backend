@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import GalleryImage, GalleryCategory, News, UserProfile
 from .forms import GalleryImageForm, UserProfileForm
-
+from .models import Event
 # DRF imports
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import api_view, permission_classes
@@ -13,6 +13,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .serializers import (
     NewsSerializer,
@@ -20,6 +22,7 @@ from .serializers import (
     GalleryImageSerializer,
     UserProfileSerializer,
     UserSerializer,
+    EventSerializer,
 )
 
 # ----------------------------
@@ -66,12 +69,12 @@ class NewsViewSet(viewsets.ModelViewSet):
     serializer_class = NewsSerializer
     permission_classes = [IsAuthenticated]   # ili tusichanganye public na admin
 
-from rest_framework import viewsets, mixins
+from rest_framework.permissions import AllowAny
 
 class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = News.objects.filter(status='published').order_by('-created_at')
     serializer_class = NewsSerializer
-    permission_classes = []  # haina auth, mtu yeyote anaweza kuona
+    permission_classes = [AllowAny]
 
     #gallery viewssets
 class GalleryCategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -159,3 +162,28 @@ def update_profile_picture(request):
 @method_decorator(csrf_exempt, name='dispatch')
 class CsrfExemptTokenObtainPairView(TokenObtainPairView):
     pass
+
+# ----------------------------
+# Event ViewSet
+# ----------------------------
+
+# CMS management (admin/editor)
+class EventViewSet(viewsets.ModelViewSet):
+    queryset = Event.objects.all().order_by("-start_date")
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+    
+class PublicEventViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Event.objects.filter(status="published").order_by("-start_date")
+    serializer_class = EventSerializer
+    permission_classes = [AllowAny]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context

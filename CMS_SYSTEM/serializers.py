@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import GalleryImage, GalleryCategory, UserProfile, News
+from .models import Event
 
 # ----------------------------
 # User Serializer
@@ -89,3 +90,25 @@ class NewsSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
+# ----------------------------
+# Event Serializer
+# ----------------------------
+class EventSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Event
+        fields = [
+            "id", "title", "description", "location",
+            "start_date", "end_date", "image", "image_url",
+            "status", "created_at"
+        ]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+

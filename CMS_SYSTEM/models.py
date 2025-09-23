@@ -50,7 +50,9 @@ class GalleryImage(models.Model):
     def __str__(self):
         return self.title
 
-
+# --------------------
+# News          
+# --------------------
 class News(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
@@ -64,6 +66,30 @@ class News(models.Model):
     date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+#--------------------   
+# Events model
+#--------------------   
+class Event(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    )
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    location = models.CharField(max_length=255)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    image = models.ImageField(upload_to="events/", blank=True, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="draft")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-start_date"]
 
     def __str__(self):
         return self.title

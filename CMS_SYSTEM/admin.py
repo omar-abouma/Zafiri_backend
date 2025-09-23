@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import UserProfile, GalleryCategory, GalleryImage, News
+from .models import Event
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -28,3 +29,10 @@ class NewsAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "status", "date", "image")}),
         ("Content", {"fields": ("short_text", "full_text")}),
     )
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ("title", "location", "start_date", "end_date", "status")
+    list_filter = ("status", "start_date", "end_date")
+    search_fields = ("title", "location")
+    ordering = ("-start_date",)    
