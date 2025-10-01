@@ -1,58 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import GalleryImage, GalleryCategory, UserProfile, News
-from .models import Event
+from .models import StaffMember
+from .models import (
+    GalleryImage, GalleryCategory,
+    UserProfile, News, Event,
+    WhyChooseServices, ServiceInfrastructure
+)
 
 # ----------------------------
-# User Serializer
+# User Serializers
 # ----------------------------
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
-        extra_kwargs = {
-            'username': {'required': False},
-            'email': {'required': False},
-        }
+        extra_kwargs = {'username': {'required': False}, 'email': {'required': False}}
 
-# ----------------------------
-# Gallery Serializers
-# ----------------------------
-class GalleryCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GalleryCategory
-        fields = ['id', 'name', 'description', 'created_at']
 
-class GalleryImageSerializer(serializers.ModelSerializer):
-    category = GalleryCategorySerializer(read_only=True)
-    category_id = serializers.PrimaryKeyRelatedField(
-        queryset=GalleryCategory.objects.all(),
-        source='category',
-        write_only=True,
-        required=False,
-        allow_null=True
-    )
-    image_url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = GalleryImage
-        fields = [
-            'id', 'title', 'description', 'image', 'image_url',
-            'category', 'category_id', 'is_active', 'published',
-            'created_at', 'updated_at'
-        ]
-
-    def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
-
-# ----------------------------
-# UserProfile Serializer
-# ----------------------------
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     profile_picture = serializers.SerializerMethodField()
@@ -64,10 +28,56 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_profile_picture(self, obj):
         if obj.profile_picture:
             request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
+            return request.build_absolute_uri(obj.profile_picture.url) if request else obj.profile_picture.url
         return None
+
+
+# ----------------------------
+# Gallery Serializers
+# ----------------------------
+class GalleryCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GalleryCategory
+        fields = '__all__'
+
+
+class GalleryImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    category = GalleryCategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=GalleryCategory.objects.all(),
+        source='category',
+        write_only=True,
+        allow_null=False,
+        required=True
+    )
+
+    class Meta:
+        model = GalleryImage
+        fields = [
+            "id",
+            "title",
+            "description",
+            "image",
+            "image_url",
+            "category",
+            "category_id",
+            "is_active",
+            "published",
+            "created_at"
+        ]
+        extra_kwargs = {
+            'category_id': {'required': True}
+        }
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
 
 # ----------------------------
 # News Serializer
@@ -77,19 +87,15 @@ class NewsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = News
-        fields = [
-            'id', 'title', 'status', 'date',
-            'short_text', 'full_text',
-            'image', 'image_url', 'created_at'
-        ]
+        fields = ['id', 'title', 'status', 'date', 'short_text', 'full_text', 'image', 'image_url', 'created_at']
 
     def get_image_url(self, obj):
+        request = self.context.get("request")
         if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
         return None
+
+
 # ----------------------------
 # Event Serializer
 # ----------------------------
@@ -98,17 +104,42 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = [
-            "id", "title", "description", "location",
-            "start_date", "end_date", "image", "image_url",
-            "status", "created_at"
-        ]
+        fields = ["id", "title", "description", "location", "start_date", "end_date", "image", "image_url", "status", "created_at"]
 
     def get_image_url(self, obj):
+        request = self.context.get("request")
         if obj.image:
-            request = self.context.get("request")
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
+
+
+# ----------------------------
+# Services Serializers
+# ----------------------------
+class WhyChooseServicesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhyChooseServices
+        fields = "__all__"
+
+
+class ServiceInfrastructureSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceInfrastructure
+        fields = ["id", "title", "desc", "image", "image_url", "link", "status", "created_at"]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image:
             if request:
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
-
+# ----------------------------
+# Staff Member Serializers
+# ----------------------------
+class StaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaffMember
+        fields = '__all__'

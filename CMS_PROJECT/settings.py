@@ -108,12 +108,6 @@ WSGI_APPLICATION = "CMS_PROJECT.wsgi.application"
 # -------------------------
 # Database
 # -------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 # For PostgreSQL (uncomment and configure if needed)
 DATABASES = {
@@ -174,7 +168,9 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+    
 }
+
 
 # -------------------------
 # JWT Settings

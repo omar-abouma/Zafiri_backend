@@ -1,20 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from .models import GalleryImage, GalleryCategory, News, UserProfile
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from .models import StaffMember
+
+from .models import (
+    GalleryImage,
+    GalleryCategory,
+    News,
+    UserProfile,
+    Event,
+    WhyChooseServices,
+    ServiceInfrastructure,
+)
 from .forms import GalleryImageForm, UserProfileForm
-from .models import Event
+
 # DRF imports
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .serializers import (
     NewsSerializer,
@@ -23,15 +31,19 @@ from .serializers import (
     UserProfileSerializer,
     UserSerializer,
     EventSerializer,
+    WhyChooseServicesSerializer,
+    ServiceInfrastructureSerializer,
 )
-
-# ----------------------------
+from .serializers import StaffSerializer
+# =====================================================
 # Template-based Views
-# ----------------------------
+# =====================================================
+
 def gallery_home(request):
     categories = GalleryCategory.objects.all()
     images = GalleryImage.objects.filter(is_active=True, published=True).order_by('-created_at')
     return render(request, 'gallery_app/gallery_home.html', {'categories': categories, 'images': images})
+
 
 @login_required
 def upload_image(request):
@@ -43,6 +55,7 @@ def upload_image(request):
     else:
         form = GalleryImageForm()
     return render(request, 'gallery_app/upload_image.html', {'form': form})
+
 
 @login_required
 def edit_profile(request):
@@ -56,51 +69,86 @@ def edit_profile(request):
         form = UserProfileForm(instance=profile)
     return render(request, 'gallery_app/edit_profile.html', {'form': form})
 
+
 def category_detail(request, category_id):
     category = get_object_or_404(GalleryCategory, id=category_id)
     images = GalleryImage.objects.filter(category=category, is_active=True, published=True)
     return render(request, 'gallery_app/category_detail.html', {'category': category, 'images': images})
 
-# ----------------------------
-# NEWS API Views
-# ----------------------------
+
+# =====================================================
+# News API Views
+# =====================================================
+
 class NewsViewSet(viewsets.ModelViewSet):
     queryset = News.objects.all().order_by('-created_at')
     serializer_class = NewsSerializer
-    permission_classes = [IsAuthenticated]   # ili tusichanganye public na admin
+    permission_classes = [IsAuthenticated]
 
-from rest_framework.permissions import AllowAny
+    def get_serializer_context(self):
+        return {"request": self.request}
+
 
 class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = News.objects.filter(status='published').order_by('-created_at')
     serializer_class = NewsSerializer
     permission_classes = [AllowAny]
 
-    #gallery viewssets
-class GalleryCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+# =====================================================
+# Gallery API Views
+# =====================================================
+
+class PublicGalleryImageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GalleryImage.objects.filter(is_active=True, published=True).order_by('-created_at')
+    serializer_class = GalleryImageSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+class PublicGalleryCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GalleryCategory.objects.filter(is_active=True)
+    serializer_class = GalleryCategorySerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+
+class GalleryCategoryAdminViewSet(viewsets.ModelViewSet):
     queryset = GalleryCategory.objects.all()
     serializer_class = GalleryCategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
-class GalleryImageViewSet(viewsets.ModelViewSet):
-    queryset = GalleryImage.objects.filter(is_active=True, published=True)
+
+class GalleryImageAdminViewSet(viewsets.ModelViewSet):
+    queryset = GalleryImage.objects.all().order_by('-created_at')
     serializer_class = GalleryImageSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category']
+    filterset_fields = ['category', 'is_active', 'published']
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'title']
 
-# ----------------------------
-# User Profile APIs
-# ----------------------------
+    def perform_create(self, serializer):
+        serializer.save(is_active=True, published=True)
+
+    def perform_update(self, serializer):
+        serializer.save(is_active=True, published=True)
+
+
+# =====================================================
+# User Profile API Views
+# =====================================================
+
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
-    """
-    GET → return user + profile
-    PUT → update user + profile
-    """
+    """GET → return user + profile | PUT → update user + profile"""
     try:
         profile = request.user.profile
     except UserProfile.DoesNotExist:
@@ -111,9 +159,15 @@ def user_profile(request):
             'user': UserSerializer(request.user, context={'request': request}).data,
             'profile': UserProfileSerializer(profile, context={'request': request}).data
         })
+
     elif request.method == 'PUT':
         user_serializer = UserSerializer(request.user, data=request.data.get('user', {}), partial=True)
-        profile_serializer = UserProfileSerializer(profile, data=request.data.get('profile', {}), partial=True, context={'request': request})
+        profile_serializer = UserProfileSerializer(
+            profile,
+            data=request.data.get('profile', {}),
+            partial=True,
+            context={'request': request}
+        )
 
         if user_serializer.is_valid() and profile_serializer.is_valid():
             user_serializer.save()
@@ -127,6 +181,7 @@ def user_profile(request):
             'profile_errors': profile_serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_profile(request):
@@ -139,6 +194,7 @@ def get_user_profile(request):
         'user': UserSerializer(request.user, context={'request': request}).data,
         'profile': UserProfileSerializer(profile, context={'request': request}).data
     })
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -156,34 +212,80 @@ def update_profile_picture(request):
 
     return Response(UserProfileSerializer(profile, context={'request': request}).data)
 
-# ----------------------------
+
+# =====================================================
 # JWT login (CSRF-exempt)
-# ----------------------------
+# =====================================================
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CsrfExemptTokenObtainPairView(TokenObtainPairView):
     pass
 
-# ----------------------------
-# Event ViewSet
-# ----------------------------
 
-# CMS management (admin/editor)
+# =====================================================
+# Event API Views
+# =====================================================
+
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by("-start_date")
     serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
-    
+        return {"request": self.request}
+
+
 class PublicEventViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Event.objects.filter(status="published").order_by("-start_date")
     serializer_class = EventSerializer
     permission_classes = [AllowAny]
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
+        return {"request": self.request}
+
+
+# =====================================================
+# Services API Views
+# =====================================================
+
+class WhyChooseServicesAdminViewSet(viewsets.ModelViewSet):
+    queryset = WhyChooseServices.objects.all()
+    serializer_class = WhyChooseServicesSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+class ServiceInfrastructureAdminViewSet(viewsets.ModelViewSet):
+    queryset = ServiceInfrastructure.objects.all()
+    serializer_class = ServiceInfrastructureSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+class WhyChooseServicesPublicViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WhyChooseServices.objects.all().order_by('id')
+    serializer_class = WhyChooseServicesSerializer
+    permission_classes = [AllowAny]
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+class ServiceInfrastructurePublicViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ServiceInfrastructure.objects.filter(status="published").order_by('-created_at')
+    serializer_class = ServiceInfrastructureSerializer
+    permission_classes = [AllowAny]
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+# ----------------------------
+# Staff Member Views            
+# ----------------------------
+class StaffViewSet(viewsets.ModelViewSet):
+    queryset = StaffMember.objects.all()
+    serializer_class = StaffSerializer
+    permission_classes = [AllowAny]  
