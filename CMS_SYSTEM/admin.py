@@ -1,15 +1,15 @@
 from django.contrib import admin
 from .models import StaffMember
+from .models import Publication
 from .models import (
     UserProfile,
     GalleryCategory,
     GalleryImage,
     News,
     Event,
-    WhyChooseServices,
-    ServiceInfrastructure,
+   
 )
-
+from .models import Service
 # --------------------
 # UserProfile admin
 # --------------------
@@ -65,17 +65,14 @@ class EventAdmin(admin.ModelAdmin):
 # --------------------
 # Services admin
 # --------------------
-@admin.register(WhyChooseServices)
-class WhyChooseServicesAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "icon")
-    search_fields = ("title", "desc")
-
-
-@admin.register(ServiceInfrastructure)
-class ServiceInfrastructureAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "status", "created_at")
-    list_filter = ("status", "created_at")
-    search_fields = ("title", "desc")
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'created_at', 'updated_at')  # columns to show
+    list_display_links = ('title',)  # make title clickable
+    search_fields = ('title', 'description')  # search box
+    list_filter = ('created_at', 'updated_at')  # filter sidebar
+    ordering = ('-created_at',)  # newest first
+    readonly_fields = ('created_at', 'updated_at')  # cannot edit these
 #----------------------------
 # Staff Member admin
 #----------------------------
@@ -84,3 +81,18 @@ class StaffAdmin(admin.ModelAdmin):
     list_display = ("name", "position", "gender")
     search_fields = ("name", "position")
     list_filter = ("gender",)
+# --------------------
+# Publication admin 
+# --------------------
+@admin.register(Publication)
+class PublicationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'author', 'pub_type', 'date_published', 'file_present')
+    list_filter = ('pub_type', 'date_published')
+    search_fields = ('title', 'author', 'abstract')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-date_published',)
+
+    def file_present(self, obj):
+        return bool(obj.file)
+    file_present.boolean = True
+    file_present.short_description = 'Has File'

@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import StaffViewSet
+from .views import PublicationViewSet
 from .views import (
     # News
     NewsViewSet, PublicNewsViewSet,
@@ -16,12 +17,7 @@ from .views import (
     user_profile, get_user_profile, update_profile_picture, CsrfExemptTokenObtainPairView,
     upload_image, gallery_home, edit_profile, category_detail
 )
-from .views import (
-    WhyChooseServicesAdminViewSet,
-    ServiceInfrastructureAdminViewSet,
-    WhyChooseServicesPublicViewSet,
-    ServiceInfrastructurePublicViewSet,
-)
+from .views import ServiceViewSet
 
 router = DefaultRouter()
 
@@ -50,17 +46,16 @@ router.register("public-gallery-categories", PublicGalleryCategoryViewSet, basen
 # --------------------
 # Services
 # --------------------
-# Admin
-router.register(r'admin-whychoose', WhyChooseServicesAdminViewSet, basename='admin-whychoose')
-router.register(r'admin-infrastructure', ServiceInfrastructureAdminViewSet, basename='admin-infrastructure')
-
-# Public
-router.register(r'public-whychoose', WhyChooseServicesPublicViewSet, basename='public-whychoose')
-router.register(r'public-infrastructure', ServiceInfrastructurePublicViewSet, basename='public-infrastructure')
+router.register(r'services', ServiceViewSet, basename='service')
 # ----------------------------
 # Staff Members 
 # ----------------------------
 router.register(r"staff", StaffViewSet, basename="staff")
+# ----------------------------
+# Publications
+# ----------------------------
+router.register(r'publications', PublicationViewSet, basename='publication')
+
 
 
 urlpatterns = [

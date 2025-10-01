@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .models import StaffMember
+from .models import Service
+from .models import Publication
 
 from .models import (
     GalleryImage,
@@ -11,8 +13,7 @@ from .models import (
     News,
     UserProfile,
     Event,
-    WhyChooseServices,
-    ServiceInfrastructure,
+   
 )
 from .forms import GalleryImageForm, UserProfileForm
 
@@ -23,6 +24,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
 
 from .serializers import (
     NewsSerializer,
@@ -31,10 +36,11 @@ from .serializers import (
     UserProfileSerializer,
     UserSerializer,
     EventSerializer,
-    WhyChooseServicesSerializer,
-    ServiceInfrastructureSerializer,
+
 )
 from .serializers import StaffSerializer
+from .serializers import ServiceSerializer
+from .serializers import PublicationSerializer
 # =====================================================
 # Template-based Views
 # =====================================================
@@ -248,40 +254,15 @@ class PublicEventViewSet(viewsets.ReadOnlyModelViewSet):
 # Services API Views
 # =====================================================
 
-class WhyChooseServicesAdminViewSet(viewsets.ModelViewSet):
-    queryset = WhyChooseServices.objects.all()
-    serializer_class = WhyChooseServicesSerializer
-    permission_classes = [IsAuthenticated]
+class ServiceViewSet(viewsets.ModelViewSet):
+    queryset = Service.objects.all().order_by('id')
+    serializer_class = ServiceSerializer
 
-    def get_serializer_context(self):
-        return {"request": self.request}
-
-
-class ServiceInfrastructureAdminViewSet(viewsets.ModelViewSet):
-    queryset = ServiceInfrastructure.objects.all()
-    serializer_class = ServiceInfrastructureSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        return {"request": self.request}
-
-
-class WhyChooseServicesPublicViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = WhyChooseServices.objects.all().order_by('id')
-    serializer_class = WhyChooseServicesSerializer
-    permission_classes = [AllowAny]
-
-    def get_serializer_context(self):
-        return {"request": self.request}
-
-
-class ServiceInfrastructurePublicViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ServiceInfrastructure.objects.filter(status="published").order_by('-created_at')
-    serializer_class = ServiceInfrastructureSerializer
-    permission_classes = [AllowAny]
-
-    def get_serializer_context(self):
-        return {"request": self.request}
+    # For API: Allow read for everyone, but CRUD only for admin
+    def get_permissions(self):
+        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return [AllowAny()]
+        return [IsAdminUser()]
 # ----------------------------
 # Staff Member Views            
 # ----------------------------
@@ -289,3 +270,35 @@ class StaffViewSet(viewsets.ModelViewSet):
     queryset = StaffMember.objects.all()
     serializer_class = StaffSerializer
     permission_classes = [AllowAny]  
+#----------------------------
+# Publication Views
+#----------------------------
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    Allow full CRUD for authenticated users (you can tighten to is_staff/is_superuser),
+    and read-only for anonymous/public.
+    """
+
+    def has_permission(self, request, view):
+        # Allow safe methods for anyone
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # For write methods require authenticated (adjust: require.is_staff if desired)
+        return request.user and request.user.is_authenticated
+
+class PublicationViewSet(viewsets.ModelViewSet):
+    queryset = Publication.objects.all()
+    serializer_class = PublicationSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'author', 'abstract']
+    ordering_fields = ['date_published', 'created_at']
+
+    def create(self, request, *args, **kwargs):
+        # supports multipart/form-data for file upload
+        return super().create(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)

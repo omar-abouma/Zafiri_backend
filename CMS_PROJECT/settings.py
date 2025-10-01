@@ -10,17 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -------------------------
 # Environment Setup
 # -------------------------
-# Set DJANGO_ENV to 'production' on your live server
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # -------------------------
 # Security Settings
 # -------------------------
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "your-secret-key-change-in-production")
-
 DEBUG = DJANGO_ENV == "development"
 
-# Allowed hosts
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 else:
@@ -41,7 +38,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
-    'django_filters',
+    "django_filters",
 
     # Your app
     "CMS_SYSTEM",
@@ -52,7 +49,7 @@ INSTALLED_APPS = [
 # -------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # Keep it near the top
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -62,7 +59,7 @@ MIDDLEWARE = [
 ]
 
 # -------------------------
-# CORS (Cross-Origin)
+# CORS
 # -------------------------
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
@@ -74,6 +71,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers := [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+])
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 
 # -------------------------
 # URL Config
@@ -94,32 +104,29 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "django.template.context_processors.media",
             ],
         },
     },
 ]
 
 # -------------------------
-# WSGI Application
+# WSGI
 # -------------------------
 WSGI_APPLICATION = "CMS_PROJECT.wsgi.application"
 
 # -------------------------
 # Database
 # -------------------------
-
-# For PostgreSQL (uncomment and configure if needed)
 DATABASES = {
     "default": {
-         "ENGINE": "django.db.backends.postgresql",
-         "NAME": os.getenv("POSTGRES_DB", "cms_db"),
-         "USER": os.getenv("POSTGRES_USER", "cms_user"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "cms_db"),
+        "USER": os.getenv("POSTGRES_USER", "cms_user"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "admin@2025"),
         "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5433"),
     }
- }
+}
 
 # -------------------------
 # Password Validation
@@ -151,7 +158,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # -------------------------
-# Django REST Framework
+# REST Framework
 # -------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -168,12 +175,10 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    
 }
 
-
 # -------------------------
-# JWT Settings
+# JWT
 # -------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -185,7 +190,7 @@ SIMPLE_JWT = {
 }
 
 # -------------------------
-# Logging (Basic Setup)
+# Logging
 # -------------------------
 LOGGING = {
     "version": 1,
@@ -200,7 +205,7 @@ LOGGING = {
 }
 
 # -------------------------
-# Default Primary Key Field
+# Default Primary Key
 # -------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

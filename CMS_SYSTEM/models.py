@@ -109,27 +109,12 @@ class Event(models.Model):
 # --------------------
 # Services model
 # --------------------
-class WhyChooseServices(models.Model):
-    icon = models.CharField(max_length=50, help_text="Emoji or class name (e.g. '🌊' or 'fa fa-icon')")
+class Service(models.Model):
     title = models.CharField(max_length=255)
-    desc = models.TextField()
-
-    def __str__(self):
-        return self.title
-
-
-class ServiceInfrastructure(models.Model):
-    STATUS_CHOICES = [
-        ("draft", "Draft"),
-        ("published", "Published"),
-    ]
-
-    title = models.CharField(max_length=255)
-    desc = models.TextField()
-    image = models.ImageField(upload_to="services/")
-    link = models.URLField(default="/area", blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    description = models.TextField()
+    image = models.ImageField(upload_to='service_images/')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
@@ -150,3 +135,34 @@ class StaffMember(models.Model):
 
     def __str__(self):
         return self.name
+#---------------------------
+# Publication model
+#---------------------------
+class Publication(models.Model):
+    """
+    Publication model with file upload.
+    """
+    TYPE_CHOICES = [
+        ('Journal Article', 'Journal Article'),
+        ('Conference Paper', 'Conference Paper'),
+        ('Book Chapter', 'Book Chapter'),
+        ('Report', 'Report'),
+        ('Other', 'Other'),
+    ]
+
+    author = models.CharField(max_length=255)
+    title = models.TextField()
+    pub_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='Other')
+    date_published = models.DateField()
+    abstract = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to='publications/%Y/%m/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date_published', '-created_at']
+        verbose_name = "Publication"
+        verbose_name_plural = "Publications"
+
+    def __str__(self):
+        return f"{self.title} — {self.author}"

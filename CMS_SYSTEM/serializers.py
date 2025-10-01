@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import StaffMember
+from .models import Service
+from .models import Publication
 from .models import (
     GalleryImage, GalleryCategory,
     UserProfile, News, Event,
-    WhyChooseServices, ServiceInfrastructure
+   
 )
 
 # ----------------------------
@@ -116,26 +118,10 @@ class EventSerializer(serializers.ModelSerializer):
 # ----------------------------
 # Services Serializers
 # ----------------------------
-class WhyChooseServicesSerializer(serializers.ModelSerializer):
+class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = WhyChooseServices
-        fields = "__all__"
-
-
-class ServiceInfrastructureSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceInfrastructure
-        fields = ["id", "title", "desc", "image", "image_url", "link", "status", "created_at"]
-
-    def get_image_url(self, obj):
-        request = self.context.get("request")
-        if obj.image:
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+        model = Service
+        fields = '__all__'
 # ----------------------------
 # Staff Member Serializers
 # ----------------------------
@@ -143,3 +129,24 @@ class StaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = StaffMember
         fields = '__all__'
+# ----------------------------
+# Publication Serializers  
+# ----------------------------
+class PublicationSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Publication
+        fields = [
+            'id', 'author', 'title', 'pub_type', 'date_published',
+            'abstract', 'file', 'file_url', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'file_url']
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if obj.file and hasattr(obj.file, 'url'):
+            if request is not None:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
