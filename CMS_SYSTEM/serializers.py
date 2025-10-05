@@ -3,10 +3,15 @@ from django.contrib.auth.models import User
 from .models import StaffMember
 from .models import Service
 from .models import Publication
+from .models import OrganizationStructureFile
 from .models import (
     GalleryImage, GalleryCategory,
     UserProfile, News, Event,
    
+)
+from .models import (
+    HomeSlide, HomeViceChancellorMessage, HomeService,
+    HomeMarineSection, HomeEvent, HomeImpactOverview
 )
 
 # ----------------------------
@@ -150,3 +155,49 @@ class PublicationSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.file.url)
             return obj.file.url
         return None
+#----------------------------
+# Organization Structure Serializers
+#----------------------------
+
+class OrganizationStructureFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganizationStructureFile
+        fields = ('id', 'file', 'file_type', 'original_name', 'uploaded_at')
+
+# ----------------------------
+# Home Page Serializers
+# ----------------------------
+class HomeSlideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeSlide
+        fields = '__all__'
+
+
+class HomeViceChancellorMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeViceChancellorMessage
+        fields = '__all__'
+
+
+class HomeServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeService
+        fields = '__all__'
+
+
+class HomeMarineSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeMarineSection
+        fields = '__all__'
+
+
+class HomeEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeEvent
+        fields = '__all__'
+
+
+class HomeImpactOverviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeImpactOverview
+        fields = '__all__'

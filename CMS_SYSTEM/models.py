@@ -166,3 +166,118 @@ class Publication(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.author}"
+# -------------------------
+# organization structure models
+# -------------------------
+
+class OrganizationStructureFile(models.Model):
+    FILE_TYPES = (
+        ('pdf', 'PDF'),
+        ('image', 'Image'),
+    )
+
+    # Ruhusu null=True, blank=True ili migration ipite (baadae unaweza kuondoa)
+    file = models.FileField(upload_to='organization_structure/', null=True, blank=True)
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES, blank=True)
+    original_name = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            if not self.original_name:
+                self.original_name = self.file.name
+            if self.file.name.lower().endswith('.pdf'):
+                self.file_type = 'pdf'
+            else:
+                self.file_type = 'image'
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.original_name or "No File"
+    
+#----------------------------
+# Home page models
+#----------------------------
+from django.db import models
+
+class HomeSlide(models.Model):
+    image = models.ImageField(upload_to='slides/')
+    text = models.TextField()
+    order_index = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Slide {self.id} - {self.text[:30]}"
+
+
+class HomeViceChancellorMessage(models.Model):
+    name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='vc/images/')
+    video = models.FileField(upload_to='vc/videos/', blank=True, null=True)  # store video file
+    message_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class HomeService(models.Model):
+    image = models.ImageField(upload_to='services/')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+
+class HomeMarineSection(models.Model):
+    image = models.ImageField(upload_to='marine/')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+
+class HomeEvent(models.Model):
+    image = models.ImageField(upload_to='events/')
+    date = models.DateField()
+    title = models.CharField(max_length=255)
+    subtitle = models.TextField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    badge = models.CharField(max_length=100, default='ZAFIRI')
+
+    def __str__(self):
+        return self.title
+
+
+class HomeImpactOverview(models.Model):
+    VISITOR = 'visitors'
+    PUBLICATION = 'publications'
+    PROJECT = 'projects'
+    EVENT = 'events'
+
+    TYPE_CHOICES = [
+        (VISITOR, 'Visitors'),
+        (PUBLICATION, 'Publications'),
+        (PROJECT, 'Projects'),
+        (EVENT, 'Events'),
+    ]
+
+    impact_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    icon = models.ImageField(upload_to='impact/')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    target = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.title} ({self.impact_type})"

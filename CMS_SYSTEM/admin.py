@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import StaffMember
 from .models import Publication
+from .models import OrganizationStructureFile
 from .models import (
     UserProfile,
     GalleryCategory,
@@ -10,6 +11,11 @@ from .models import (
    
 )
 from .models import Service
+from .models import (
+    HomeSlide, HomeViceChancellorMessage, HomeService,
+    HomeMarineSection, HomeEvent, HomeImpactOverview
+)
+
 # --------------------
 # UserProfile admin
 # --------------------
@@ -96,3 +102,67 @@ class PublicationAdmin(admin.ModelAdmin):
         return bool(obj.file)
     file_present.boolean = True
     file_present.short_description = 'Has File'
+#----------------------------
+# Organization Structure admin
+#----------------------------
+@admin.register(OrganizationStructureFile)
+class OrganizationStructureFileAdmin(admin.ModelAdmin):
+    list_display = ('original_name', 'file_type', 'uploaded_at')
+    readonly_fields = ('uploaded_at',)
+
+# -----------------------------
+# HomeSlide Admin
+# -----------------------------
+@admin.register(HomeSlide)
+class HomeSlideAdmin(admin.ModelAdmin):
+    list_display = ('id', 'text', 'order_index', 'is_active', 'created_at', 'updated_at')
+    list_editable = ('order_index', 'is_active')
+    ordering = ('order_index',)
+    search_fields = ('text',)
+
+
+# -----------------------------
+# HomeViceChancellorMessage Admin
+# -----------------------------
+@admin.register(HomeViceChancellorMessage)
+class HomeVCMessageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'title', 'created_at', 'updated_at')
+    search_fields = ('name', 'title')
+
+
+# -----------------------------
+# HomeService Admin
+# -----------------------------
+@admin.register(HomeService)
+class HomeServiceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'created_at', 'updated_at')
+    search_fields = ('title',)
+
+
+# -----------------------------
+# HomeMarineSection Admin
+# -----------------------------
+@admin.register(HomeMarineSection)
+class HomeMarineAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'created_at', 'updated_at')
+    search_fields = ('title',)
+
+
+# -----------------------------
+# HomeEvent Admin
+# -----------------------------
+@admin.register(HomeEvent)
+class HomeEventAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'date', 'badge', 'uploaded_at')
+    list_filter = ('date', 'badge')
+    search_fields = ('title', 'subtitle')
+
+
+# -----------------------------
+# HomeImpactOverview Admin
+# -----------------------------
+@admin.register(HomeImpactOverview)
+class HomeImpactOverviewAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'impact_type', 'target')
+    list_filter = ('impact_type',)
+    search_fields = ('title',)

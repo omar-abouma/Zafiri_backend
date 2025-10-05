@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import StaffMember
 from .models import Service
 from .models import Publication
+from .models import OrganizationStructureFile
 
 from .models import (
     GalleryImage,
@@ -14,6 +15,10 @@ from .models import (
     UserProfile,
     Event,
    
+)
+from .models import (
+    HomeSlide, HomeViceChancellorMessage, HomeService,
+    HomeMarineSection, HomeEvent, HomeImpactOverview
 )
 from .forms import GalleryImageForm, UserProfileForm
 
@@ -24,7 +29,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -41,6 +46,11 @@ from .serializers import (
 from .serializers import StaffSerializer
 from .serializers import ServiceSerializer
 from .serializers import PublicationSerializer
+from .serializers import OrganizationStructureFileSerializer
+from .serializers import (
+    HomeSlideSerializer, HomeViceChancellorMessageSerializer, HomeServiceSerializer,
+    HomeMarineSectionSerializer, HomeEventSerializer, HomeImpactOverviewSerializer
+)
 # =====================================================
 # Template-based Views
 # =====================================================
@@ -302,3 +312,48 @@ class PublicationViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
+#----------------------------
+# Organization Structure Views
+#----------------------------
+class OrganizationStructureFileViewSet(viewsets.ModelViewSet):
+    queryset = OrganizationStructureFile.objects.all().order_by('uploaded_at')
+    serializer_class = OrganizationStructureFileSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+#----------------------------
+# Home Page Views
+#----------------------------
+class HomeSlideViewSet(viewsets.ModelViewSet):
+    queryset = HomeSlide.objects.all().order_by('order_index')
+    serializer_class = HomeSlideSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class HomeViceChancellorMessageViewSet(viewsets.ModelViewSet):
+    queryset = HomeViceChancellorMessage.objects.all()
+    serializer_class = HomeViceChancellorMessageSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class HomeServiceViewSet(viewsets.ModelViewSet):
+    queryset = HomeService.objects.all()
+    serializer_class = HomeServiceSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class HomeMarineSectionViewSet(viewsets.ModelViewSet):
+    queryset = HomeMarineSection.objects.all()
+    serializer_class = HomeMarineSectionSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class HomeEventViewSet(viewsets.ModelViewSet):
+    queryset = HomeEvent.objects.all().order_by('-date')
+    serializer_class = HomeEventSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class HomeImpactOverviewViewSet(viewsets.ModelViewSet):
+    queryset = HomeImpactOverview.objects.all()
+    serializer_class = HomeImpactOverviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]

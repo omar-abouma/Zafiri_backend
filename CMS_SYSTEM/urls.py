@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import StaffViewSet
 from .views import PublicationViewSet
+from .views import OrganizationStructureFileViewSet
 from .views import (
     # News
     NewsViewSet, PublicNewsViewSet,
@@ -18,6 +19,10 @@ from .views import (
     upload_image, gallery_home, edit_profile, category_detail
 )
 from .views import ServiceViewSet
+from .views import (
+    HomeSlideViewSet, HomeViceChancellorMessageViewSet, HomeServiceViewSet,
+    HomeMarineSectionViewSet, HomeEventViewSet, HomeImpactOverviewViewSet
+)
 
 router = DefaultRouter()
 
@@ -55,6 +60,20 @@ router.register(r"staff", StaffViewSet, basename="staff")
 # Publications
 # ----------------------------
 router.register(r'publications', PublicationViewSet, basename='publication')
+#----------------------------
+# Organization Structure
+#----------------------------
+router.register(r'organization-structure-files', OrganizationStructureFileViewSet, basename='organization-structure-files')
+# ----------------------------
+# Home Page Components
+# ----------------------------
+router.register(r'home-slides', HomeSlideViewSet)
+router.register(r'home-vc-message', HomeViceChancellorMessageViewSet)
+router.register(r'home-services', HomeServiceViewSet)
+router.register(r'home-marine', HomeMarineSectionViewSet)
+router.register(r'home-events', HomeEventViewSet)
+router.register(r'home-impact', HomeImpactOverviewViewSet)
+
 
 
 
